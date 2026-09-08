@@ -19,7 +19,7 @@ except ImportError:
     import requests
 
 DEFAULT_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8, text/html;q=0.7, */*;q=0.5",
     "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     "Cache-Control": "no-cache"
@@ -76,7 +76,8 @@ def get_rss_info(feed_url, index, rss_info_list):
                 req_kwargs["proxies"] = proxies
 
             try:
-                resp = requests.get(actual_url, impersonate="safari15_5", **req_kwargs)
+                # 使用较新的 Chrome 浏览器指纹绕过 Cloudflare 防火墙
+                resp = requests.get(actual_url, impersonate="chrome124", **req_kwargs)
             except TypeError:
                 # 若降级为原生 requests，无 impersonate 参数
                 resp = requests.get(actual_url, **req_kwargs)
