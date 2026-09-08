@@ -1,10 +1,11 @@
 name: zhaoolee
 on:
   schedule:
-    - cron:  '0 22 * * *'    # 国际标准时间22点（北京时间早上6点发） 
+    - cron:  '20 22 * * *'    # 国际标准时间22点20分（北京时间早上6点20分发，避开整点排队拥堵） 
   push:
     branches:    
       - main
+  workflow_dispatch:
 jobs:
   push:
       runs-on: ${{ matrix.operating-system }}
@@ -13,11 +14,11 @@ jobs:
           # in this example, there is a newer version already installed, 3.7.7, so the older version will be downloaded
           operating-system: ['ubuntu-22.04']
       steps:
-      - uses: actions/checkout@v3 # Checking out the repo
+      - uses: actions/checkout@v4 # Checking out the repo
       - name: Run with setup-python 3.9
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.12'
           update-environment: false
           cache: 'pipenv'
       - name: Install pipenv
@@ -26,16 +27,14 @@ jobs:
         run:  pipenv --python python3 && pipenv install
       - name: Build
         env:
-            USER: ${{ secrets.USER }}
-            PASSWORD: ${{ secrets.PASSWORD }}
-            HOST: ${{ secrets.HOST }}
+            MAIL_USER: ${{ secrets.MAIL_USER }}
+            MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+            MAIL_HOST: ${{ secrets.MAIL_HOST }}
         run: pipenv run build
-      - name: Commit and push if changed   # 更新README.md
+      - name: Commit and push if changed
         run: |
           git diff
           git config --global user.email "zhaoolee@gmail.com"
           git config --global user.name "zhaoolee"
-          git add README.md
-          git add docs
-          git commit -m "Github Action auto Updated"
-          git push
+          git add README.md docs garssInfo.json zhaoolee_github_garss_subscription_list_v1.opml zhaoolee_github_garss_subscription_list_v2.opml
+          git diff --cached --quiet || (git commit -m "Github Action auto Updated" && git push)

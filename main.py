@@ -1,67 +1,130 @@
 import feedparser
 import time
+import calendar
+import email.utils
 import os
 import re
 import pytz
 from datetime import datetime
 import yagmail
-import requests
-import markdown
 import json
+import html
 import shutil
 from urllib.parse import urlparse
-from multiprocessing import Pool,  Manager
+from multiprocessing import Pool, Manager
 
+try:
+    from curl_cffi import requests
+except ImportError:
+    import requests
 
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    "Accept": "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8, text/html;q=0.7, */*;q=0.5",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Cache-Control": "no-cache"
+}
+
+NON_RETRYABLE_CODES = {401, 403, 404, 410}
+
+def parse_entry_date(entrie):
+    """多级容错解析 RSS 条目发布时间与北京时间日期"""
+    pub_parsed = entrie.get("published_parsed") or entrie.get("updated_parsed") or entrie.get("created_parsed")
+    if pub_parsed:
+        try:
+            ts = float(calendar.timegm(pub_parsed))
+            beijing_tz = pytz.timezone('Asia/Shanghai')
+            date_str = datetime.fromtimestamp(ts, beijing_tz).strftime("%Y-%m-%d")
+            return ts, date_str, True
+        except Exception:
+            pass
+
+    # 兜底：feedparser 未能解析时尝试原始字符串解析
+    raw_date = entrie.get("published") or entrie.get("updated") or entrie.get("pubDate")
+    if raw_date and isinstance(raw_date, str):
+        try:
+            dt = email.utils.parsedate_to_datetime(raw_date)
+            ts = float(dt.timestamp())
+            beijing_tz = pytz.timezone('Asia/Shanghai')
+            date_str = datetime.fromtimestamp(ts, beijing_tz).strftime("%Y-%m-%d")
+            return ts, date_str, True
+        except Exception:
+            pass
+
+    return 0.0, "", False
 
 def get_rss_info(feed_url, index, rss_info_list):
     result = {"result": []}
-    request_success = False
-    # 如果请求出错,则重新请求,最多五次
+    
+    # 智能修正已下线的私有 RSSHub 域名，自动映射复活 17 个关键源
+    actual_url = feed_url
+    rsshub_mirror = os.environ.get("RSSHUB_BASE_URL", "https://rsshub.app")
+    if "rsshub.v2fy.com" in actual_url:
+        actual_url = actual_url.replace("https://rsshub.v2fy.com", rsshub_mirror)
+
+    # 代理配置探测
+    proxies = {}
+    proxy_url = os.environ.get("RSS_PROXY") or os.environ.get("HTTPS_PROXY")
+    if proxy_url:
+        proxies = {"http": proxy_url, "https": proxy_url}
+
     for i in range(3):
-        if(request_success == False):
+        try:
+            timeout_sec = (i + 1) * 8
+            req_kwargs = {"headers": DEFAULT_HEADERS, "timeout": timeout_sec}
+            if proxies:
+                req_kwargs["proxies"] = proxies
+
             try:
-                headers = {
-                    # 设置用户代理头(为狼披上羊皮)
-                    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.132 Safari/537.36",
-                    "Content-Encoding": "gzip"
-                }
-                # 三次分别设置8, 16, 24秒钟超时
-                feed_url_content = requests.get(feed_url,  timeout= (i+1)*8 ,headers = headers).content
-                feed = feedparser.parse(feed_url_content)
-                feed_entries = feed["entries"]
-                feed_entries_length = len(feed_entries)
-                print("==feed_url=>>", feed_url, "==len=>>", feed_entries_length)
-                for entrie in feed_entries[0: feed_entries_length-1]:
-                    title = entrie["title"]
-                    link = entrie["link"]
-                    date = time.strftime("%Y-%m-%d", entrie["published_parsed"])
+                resp = requests.get(actual_url, impersonate="safari15_5", **req_kwargs)
+            except TypeError:
+                # 若降级为原生 requests，无 impersonate 参数
+                resp = requests.get(actual_url, **req_kwargs)
 
-                    title = title.replace("\n", "")
-                    title = title.replace("\r", "")
+            # 遇到明确拒绝或不存在的状态码，立即快速熔断，绝不无效重试
+            if resp.status_code in NON_RETRYABLE_CODES:
+                print(f"[{index}] {feed_url} 返回不可恢复状态码 HTTP {resp.status_code}，快速熔断。")
+                break
 
-                    result["result"].append({
-                        "title": title,
-                        "link": link,
-                        "date": date
-                    })
-                request_success = True
-            except Exception as e:
-                print(feed_url+"第+"+str(i)+"+次请求出错==>>",e)
-                pass
-        else:
-            pass
+            resp.raise_for_status()
+
+            # 解析 RSS 响应
+            feed = feedparser.parse(resp.content)
+            feed_entries = feed.get("entries", [])
+            
+            # 若内容不是标准 RSS（如部分防火墙质询的 HTML 页面）
+            if not feed_entries and feed.get("bozo", 0) == 1:
+                print(f"[{index}] {feed_url} 响应内容非有效 XML/RSS 数据流。")
+                break
+
+            entries_to_process = feed_entries[:10] if len(feed_entries) > 10 else feed_entries
+            for entrie in entries_to_process:
+                title = entrie.get("title", "").replace("\n", "").replace("\r", "")
+                link = entrie.get("link", "")
+                ts, date_str, has_date = parse_entry_date(entrie)
+
+                result["result"].append({
+                    "title": title,
+                    "link": link,
+                    "date": date_str,
+                    "timestamp": ts,
+                    "has_explicit_date": has_date
+                })
+            break
+        except Exception as e:
+            print(f"[{index}] {feed_url} 第 {i+1} 次请求出错==>>", e)
+            if i < 2:
+                time.sleep(1)
 
     rss_info_list[index] = result["result"]
-    print("本次爬取==》》", feed_url, "<<<===", index, result["result"])
+    print("本次爬取==》》", feed_url, "<<<===", index, len(result["result"]))
     # 剩余数量
     remaining_amount = 0
-
     for tmp_rss_info_atom in rss_info_list:
-        if(isinstance(tmp_rss_info_atom, int)):
+        if isinstance(tmp_rss_info_atom, int):
             remaining_amount = remaining_amount + 1
             
-    print("当前进度 | 剩余数量", remaining_amount, "已完成==>>", len(rss_info_list)-remaining_amount)
+    print("当前进度 | 剩余数量", remaining_amount, "已完成==>>", len(rss_info_list) - remaining_amount)
     return result["result"]
     
 
@@ -72,13 +135,13 @@ def send_mail(email, title, contents):
     password = ""
     host = ""
     try:
-        if(os.environ["USER"]):
-            user = os.environ["USER"]
-        if(os.environ["PASSWORD"]):
-            password = os.environ["PASSWORD"]
-        if(os.environ["HOST"]):
-            host = os.environ["HOST"]
-    except:
+        if(os.environ["MAIL_USER"]):
+            user = os.environ["MAIL_USER"]
+        if(os.environ["MAIL_PASSWORD"]):
+            password = os.environ["MAIL_PASSWORD"]
+        if(os.environ["MAIL_HOST"]):
+            host = os.environ["MAIL_HOST"]
+    except KeyError:
         print("无法获取github的secrets配置信息,开始使用本地变量")
         if(os.path.exists(os.path.join(os.getcwd(),"secret.json"))):
             with open(os.path.join(os.getcwd(),"secret.json"),'r') as load_f:
@@ -96,96 +159,125 @@ def send_mail(email, title, contents):
     # 发送邮件
     yag.send(email, title, contents)
 
+def format_item_link(item, is_new):
+    """安全格式化 Markdown 表格行超链接，根除尾部悬挂管道符问题"""
+    title = item.get("title", "").replace("|", r"\|").replace("[", r"\[").replace("]", r"\]")
+    date_str = item.get("date", "")
+    link = item.get("link", "")
+    if is_new:
+        suffix = f" 🌈 {date_str}" if date_str else " 🌈"
+    else:
+        suffix = f" | {date_str}" if date_str else ""
+    return f"[{title}{suffix}]({link})"
+
+def get_last_run_timestamp(readme_path="README.md"):
+    try:
+        target = os.path.join(os.getcwd(), readme_path)
+        if os.path.exists(target):
+            with open(target, "r", encoding="utf-8") as f:
+                content = f.read()
+            m = re.search(r"生产时间\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})", content)
+            if m:
+                beijing_tz = pytz.timezone('Asia/Shanghai')
+                dt = datetime.strptime(m.group(1), "%Y-%m-%d %H:%M:%S")
+                dt = beijing_tz.localize(dt)
+                return dt.timestamp()
+    except Exception:
+        pass
+    return None
+
 def replace_readme():
     new_edit_readme_md = ["", ""]
     current_date_news_index = [""]
 
-
-    
     # 读取EditREADME.md
     print("replace_readme")
     new_num = 0
     with open(os.path.join(os.getcwd(),"EditREADME.md"),'r') as load_f:
-        edit_readme_md = load_f.read();
+        edit_readme_md = load_f.read()
 
+    new_edit_readme_md[0] = edit_readme_md
+    before_info_list =  re.findall(r'\{\{latest_content\}\}.*\[订阅地址\]\(.*\)' ,edit_readme_md)
+    # 填充统计RSS数量
+    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{rss_num}}", str(len(before_info_list)))
+    # 填充统计时间
+    ga_rss_datetime = datetime.fromtimestamp(int(time.time()),pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
+    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{ga_rss_datetime}}", str(ga_rss_datetime))
 
+    # 使用进程池进行数据获取，获得rss_info_list
+    before_info_list_len = len(before_info_list)
+    rss_info_list = Manager().list(range(before_info_list_len))
+    print('初始化完毕==》', rss_info_list)
 
-        new_edit_readme_md[0] = edit_readme_md
-        before_info_list =  re.findall(r'\{\{latest_content\}\}.*\[订阅地址\]\(.*\)' ,edit_readme_md);
-        # 填充统计RSS数量
-        new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{rss_num}}", str(len(before_info_list)))
-        # 填充统计时间
-        ga_rss_datetime = datetime.fromtimestamp(int(time.time()),pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
-        new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{ga_rss_datetime}}", str(ga_rss_datetime))
+    # 创建一个最多开启8进程的进程池
+    po = Pool(8)
 
-        # 使用进程池进行数据获取，获得rss_info_list
-        before_info_list_len = len(before_info_list)
-        rss_info_list = Manager().list(range(before_info_list_len))
-        print('初始化完毕==》', rss_info_list)
+    for index, before_info in enumerate(before_info_list):
+        # 获取link
+        link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
+        po.apply_async(get_rss_info,(link, index, rss_info_list))
 
-        
+    # 关闭进程池,不再接收新的任务,开始执行任务
+    po.close()
 
-        # 创建一个最多开启8进程的进程池
-        po = Pool(8)
+    # 主进程等待所有子进程结束
+    po.join()
+    print("----结束----", rss_info_list)
 
-        for index, before_info in enumerate(before_info_list):
-            # 获取link
-            link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
-            po.apply_async(get_rss_info,(link, index, rss_info_list))
+    # 动态自适应时间窗口：以上次 README 生产时间为下限（最大28小时，防止重复推送并容忍排队延迟）
+    TIME_WINDOW_SECONDS = 28 * 3600
+    FUTURE_TOLERANCE_SECONDS = 3600
+    now_ts = time.time()
+    last_run_ts = get_last_run_timestamp()
+    window_start_ts = min(max(now_ts - TIME_WINDOW_SECONDS, last_run_ts), now_ts) if last_run_ts else (now_ts - TIME_WINDOW_SECONDS)
 
+    def is_new_entry(item):
+        try:
+            ts = float(item.get("timestamp", 0))
+        except (ValueError, TypeError):
+            ts = 0.0
+        if ts > 0:
+            return window_start_ts <= ts <= (now_ts + FUTURE_TOLERANCE_SECONDS)
+        # 无有效时间戳的文章坚决不标记为新，根除幽灵文章每日重复推送
+        return False
 
-        # 关闭进程池,不再接收新的任务,开始执行任务
-        po.close()
+    for index, before_info in enumerate(before_info_list):
+        # 获取link
+        link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
+        # 生成超链接
+        rss_info = rss_info_list[index]
+        if not isinstance(rss_info, list):
+            rss_info = []
 
-        # 主进程等待所有子进程结束
-        po.join()
-        print("----结束----", rss_info_list)
+        latest_content = ""
+        parse_result = urlparse(link)
+        scheme_netloc_url = str(parse_result.scheme) + "://" + str(parse_result.netloc)
+        latest_content = f"[暂无法通过爬虫获取信息, 点击进入源网站主页]({scheme_netloc_url})"
 
+        # 加入到索引
+        try:
+            for rss_info_atom in rss_info:
+                if is_new_entry(rss_info_atom):
+                    new_num = new_num + 1
+                    if (new_num % 2) == 0:
+                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;' ><a href='" + html.escape(rss_info_atom["link"], quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
+                    else:
+                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;background-color:#FAF6EA;' ><a href='" + html.escape(rss_info_atom["link"], quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
 
-        for index, before_info in enumerate(before_info_list):
-            # 获取link
-            link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
-            # 生成超链接
-            rss_info = rss_info_list[index]
-            latest_content = ""
-            parse_result = urlparse(link)
-            scheme_netloc_url = str(parse_result.scheme)+"://"+str(parse_result.netloc)
-            latest_content = "[暂无法通过爬虫获取信息, 点击进入源网站主页]("+ scheme_netloc_url +")"
+        except Exception as e:
+            print("An exception occurred in news index:", e)
 
-            # 加入到索引
-            try:
-                for rss_info_atom in rss_info:
-                    if (rss_info_atom["date"] == datetime.today().strftime("%Y-%m-%d")):
-                        new_num = new_num + 1
-                        if (new_num % 2) == 0:
-                            current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;' ><a href='" + rss_info_atom["link"] + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + rss_info_atom["title"] + " | 第" + str(new_num) +"篇" + "</a></div>"
-                        else:
-                            current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;background-color:#FAF6EA;' ><a href='" + rss_info_atom["link"] + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + rss_info_atom["title"] + " | 第" + str(new_num) +"篇" + "</a></div>"
+        if len(rss_info) > 0:
+            latest_content = format_item_link(rss_info[0], is_new_entry(rss_info[0]))
 
-            except:
-                print("An exception occurred")
-            
+        if len(rss_info) > 1:
+            latest_content = latest_content + "<br/>" + format_item_link(rss_info[1], is_new_entry(rss_info[1]))
 
-                
-            if(len(rss_info) > 0):
-                rss_info[0]["title"] = rss_info[0]["title"].replace("|", "\|")
-                rss_info[0]["title"] = rss_info[0]["title"].replace("[", "\[")
-                rss_info[0]["title"] = rss_info[0]["title"].replace("]", "\]")
-
-                latest_content = "[" + "‣ " + rss_info[0]["title"] + ( " 🌈 " + rss_info[0]["date"] if (rss_info[0]["date"] == datetime.today().strftime("%Y-%m-%d")) else " \| " + rss_info[0]["date"] ) +"](" + rss_info[0]["link"] +")"  
-
-            if(len(rss_info) > 1):
-                rss_info[1]["title"] = rss_info[1]["title"].replace("|", "\|")
-                rss_info[1]["title"] = rss_info[1]["title"].replace("[", "\[")
-                rss_info[1]["title"] = rss_info[1]["title"].replace("]", "\]")
-
-                latest_content = latest_content + "<br/>[" + "‣ " +  rss_info[1]["title"] + ( " 🌈 " + rss_info[0]["date"] if (rss_info[0]["date"] == datetime.today().strftime("%Y-%m-%d")) else " \| " + rss_info[0]["date"] ) +"](" + rss_info[1]["link"] +")"
-
-            # 生成after_info
-            after_info = before_info.replace("{{latest_content}}", latest_content)
-            print("====latest_content==>", latest_content)
-            # 替换edit_readme_md中的内容
-            new_edit_readme_md[0] = new_edit_readme_md[0].replace(before_info, after_info)
+        # 生成after_info
+        after_info = before_info.replace("{{latest_content}}", latest_content)
+        print("====latest_content==>", latest_content)
+        # 替换edit_readme_md中的内容
+        new_edit_readme_md[0] = new_edit_readme_md[0].replace(before_info, after_info)
     
     # 替换EditREADME中的索引
     new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{news}}", current_date_news_index[0])
@@ -340,7 +432,6 @@ def main():
     create_json()
     create_opml()
     readme_md = replace_readme()
-    content = markdown.markdown(readme_md[0], extensions=['tables', 'fenced_code'])
     cp_readme_md_to_docs()
     cp_media_to_docs()
     email_list = get_email_list()
