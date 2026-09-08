@@ -676,6 +676,46 @@
             "xmlUrl": "https://qianguyihao.com/atom.xml"
         },
         {
+            "description": "互联网从业者，专注效率工具和思维方法",
+            "title": "涛叔",
+            "xmlUrl": "https://taoshu.in/feed.xml"
+        },
+        {
+            "description": "有趣有用的互联网趋势",
+            "title": "可能吧",
+            "xmlUrl": "https://feeds.feedburner.com/kenengbarss"
+        },
+        {
+            "description": "一个还在重新学习，重塑思想的开发者",
+            "title": "Guangzheng Li",
+            "xmlUrl": "https://guangzhengli.com/rss.xml"
+        },
+        {
+            "description": "科学空间博主，【数学、天文、理论物理、写作、阅读、计算机、中国象棋、厨房】爱好者",
+            "title": "苏剑林",
+            "xmlUrl": "https://spaces.ac.cn/feed"
+        },
+        {
+            "description": "I am an LLM Research Engineer with over a decade of experience in artificial intelligence.",
+            "title": "Sebastian Raschka",
+            "xmlUrl": "https://sebastianraschka.com/rss_feed.xml"
+        },
+        {
+            "description": "",
+            "title": "宝玉",
+            "xmlUrl": "https://baoyu.io/feed.xml"
+        },
+        {
+            "description": "",
+            "title": "Simon Willison",
+            "xmlUrl": "https://simonwillison.net/atom/links/"
+        },
+        {
+            "description": "",
+            "title": "肖恩聊技术",
+            "xmlUrl": "https://shawnxie.top/rss.xml"
+        },
+        {
             "description": "少数派致力于更好地运用数字产品或科学方法，帮助用户提升工作效率和生活品质",
             "title": "少数派",
             "xmlUrl": "https://sspai.com/feed"
@@ -736,9 +776,19 @@
             "xmlUrl": "https://aotu.io/atom.xml"
         },
         {
+            "description": "HuggingFace's Blog",
+            "title": "HuggingFace Blog",
+            "xmlUrl": "https://huggingface.co/blog/feed.xml"
+        },
+        {
             "description": "Apple官方消息",
             "title": "Apple新闻",
             "xmlUrl": "https://www.apple.com/newsroom/rss-feed.rss"
+        },
+        {
+            "description": "JinaAI",
+            "title": "JinaAI",
+            "xmlUrl": "https://jina.ai/feed.rss"
         },
         {
             "description": "虎嗅网新闻",
@@ -826,19 +876,9 @@
             "xmlUrl": "https://iseex.github.io/feed"
         },
         {
-            "description": "李子柒的微博",
-            "title": "李子柒",
-            "xmlUrl": "https://rsshub.v2fy.com/weibo/user/2970452952"
-        },
-        {
             "description": "为更理想的生活",
             "title": "理想生活实验室",
             "xmlUrl": "https://www.toodaylab.com/rss"
-        },
-        {
-            "description": "家的主理人社区",
-            "title": "一兜糖",
-            "xmlUrl": "https://rsshub.v2fy.com/yidoutang/index"
         },
         {
             "description": "Adobe旗下设计网站Behance",
@@ -874,6 +914,16 @@
             "description": "你的随身摄影杂志",
             "title": "摄影世界",
             "xmlUrl": "https://feedx.net/rss/photoworld.xml"
+        },
+        {
+            "description": "Design Milk 是一个分享现代设计与生活方式灵感的网站",
+            "title": "Design Milk",
+            "xmlUrl": "https://design-milk.com/feed/"
+        },
+        {
+            "description": "Magazine on CSS, JavaScript, front-end, accessibility, UX and design. For developers, designers and front-end engineers.s",
+            "title": "Smashing Magazine",
+            "xmlUrl": "https://www.smashingmagazine.com/feed/"
         },
         {
             "description": "知乎每日精选",
@@ -931,24 +981,14 @@
             "xmlUrl": "https://www.v2ex.com/index.xml"
         },
         {
+            "description": "创意工作者的社区",
+            "title": "Linuxdo",
+            "xmlUrl": "https://linux.do/latest.rss"
+        },
+        {
             "description": "酷 壳RSS",
             "title": "酷壳(左耳朵耗子)",
             "xmlUrl": "https://coolshell.cn/feed"
-        },
-        {
-            "description": "豆瓣最受欢迎的影评",
-            "title": "豆瓣",
-            "xmlUrl": "https://www.douban.com/feed/review/movie"
-        },
-        {
-            "description": "豆瓣最受欢迎的书评",
-            "title": "豆瓣",
-            "xmlUrl": "https://www.douban.com/feed/review/book"
-        },
-        {
-            "description": "豆瓣最受欢迎的乐评",
-            "title": "豆瓣",
-            "xmlUrl": "https://www.douban.com/feed/review/music"
         },
         {
             "description": "开源中国社区推荐文章",
@@ -966,16 +1006,6 @@
             "xmlUrl": "http://feed.cnblogs.com/blog/sitehome/rss"
         },
         {
-            "description": "PTT电影专题",
-            "title": "PTT(台湾论坛)",
-            "xmlUrl": "https://www.ptt.cc/atom/movie.xml"
-        },
-        {
-            "description": "PTT正妹专题",
-            "title": "PTT(台湾论坛)",
-            "xmlUrl": "https://www.ptt.cc/atom/beauty.xml"
-        },
-        {
             "description": "吾爱破解精品软件区",
             "title": "吾爱破解",
             "xmlUrl": "https://rsshub.v2fy.com/discuz/x/https%3a%2f%2fwww.52pojie.cn%2fforum-16-1.html"
@@ -991,26 +1021,6 @@
             "xmlUrl": "https://bitinn.net/feed/"
         },
         {
-            "description": "男性向作品排行 - 前20",
-            "title": "Pixiv(艺术家社区)",
-            "xmlUrl": "https://rakuen.thec.me/PixivRss/male-20"
-        },
-        {
-            "description": "女性向作品排行 - 前20",
-            "title": "Pixiv(艺术家社区)",
-            "xmlUrl": "https://rakuen.thec.me/PixivRss/female-20"
-        },
-        {
-            "description": "Pixiv每日排行 - 前20",
-            "title": "Pixiv(艺术家社区)",
-            "xmlUrl": "http://rakuen.thec.me/PixivRss/daily-20"
-        },
-        {
-            "description": "Pixiv每月排行 - 前20",
-            "title": "Pixiv(艺术家社区)",
-            "xmlUrl": "http://rakuen.thec.me/PixivRss/monthly-20"
-        },
-        {
             "description": "中文业界资讯",
             "title": "cnBeta",
             "xmlUrl": "https://feedx.net/rss/cnbetatop.xml"
@@ -1021,24 +1031,19 @@
             "xmlUrl": "http://www.chinadaily.com.cn/rss/cndy_rss.xml"
         },
         {
-            "description": "妹子热门图",
-            "title": "MM范",
-            "xmlUrl": "https://rsshub.v2fy.com/95mm/tab/热门"
-        },
-        {
             "description": "每日精选",
             "title": "CNU视觉联盟",
             "xmlUrl": "https://rsshub.v2fy.com/cnu/selected"
         },
         {
-            "description": "最新香水评论-发现香水圈的新鲜事",
-            "title": "香水时代",
-            "xmlUrl": "https://rsshub.v2fy.com/nosetime/home"
-        },
-        {
             "description": "无线路由器爱好者的乐园",
             "title": "恩山无线论坛",
             "xmlUrl": "https://rsshub.v2fy.com/right/forum/31"
+        },
+        {
+            "description": "一个面向Web开发、主机托管、VPS/服务器等技术话题的极客社区",
+            "title": "NodeSeek",
+            "xmlUrl": "https://rss.nodeseek.com/"
         },
         {
             "description": "666影院 - 全网VIP电影免费看！",
@@ -1051,11 +1056,6 @@
             "xmlUrl": "https://www.limetorrents.pro/rss/"
         },
         {
-            "description": "种子站Torlock",
-            "title": "Torlock",
-            "xmlUrl": "https://www.torlock.com/rss.xml"
-        },
-        {
             "description": "Most popular Torrents in the smallest file size",
             "title": "YTS",
             "xmlUrl": "https://yts.mx/rss"
@@ -1064,21 +1064,6 @@
             "description": "种子站RARBG",
             "title": "RARBG",
             "xmlUrl": "https://rarbg.to/rss.php"
-        },
-        {
-            "description": "不止是游戏",
-            "title": "机核网",
-            "xmlUrl": "https://www.gcores.com/rss"
-        },
-        {
-            "description": "无论你是游戏死忠，还是轻度的休闲玩家，在这里都能找到感兴趣的东西。",
-            "title": "游研社",
-            "xmlUrl": "https://www.yystv.cn/rss/feed"
-        },
-        {
-            "description": "深度解读游戏",
-            "title": "游戏葡萄",
-            "xmlUrl": "https://rsshub.v2fy.com/gamegrape/13"
         },
         {
             "description": "有品格的数字古籍图书馆",
