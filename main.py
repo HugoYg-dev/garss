@@ -11,6 +11,7 @@ import json
 import html
 import shutil
 from urllib.parse import urlparse
+import urllib.request
 from multiprocessing import Pool, Manager
 
 try:
@@ -53,6 +54,88 @@ def parse_entry_date(entrie):
 
     return 0.0, "", False
 
+def fetch_linux_do_fallback(feed_url="https://linux.do/latest.rss"):
+    """
+    针对 linux.do 在 GitHub Actions 等数据中心机房 IP 下遭遇 Cloudflare 429 频控/盾拦截的专用兜底抓取方案。
+    使用 Jina Reader 渲染引擎进行无头提取，免配置 API Key 且具备高信誉出口网络。
+    """
+    results = []
+    jina_url = f"https://r.jina.ai/{feed_url}"
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "X-Return-Format": "html",
+        "Cache-Control": "no-cache",
+    }
+
+    # 策略 1：HTML 格式化解析（最精确直接）
+    try:
+        req = urllib.request.Request(jina_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status == 200:
+                html_text = resp.read().decode("utf-8", errors="ignore")
+                pattern = r"<h3><a\s+href=[\"\x27]([^\"\x27]+)[\"\x27]>([\s\S]*?)</a></h3>[\s\S]*?<time>([\s\S]*?)</time>"
+                matches = re.findall(pattern, html_text)
+                beijing_tz = pytz.timezone("Asia/Shanghai")
+                for link, title, raw_date in matches:
+                    clean_title = html.unescape(title).strip().replace("\n", "").replace("\r", "")
+                    clean_link = html.unescape(link).strip()
+                    clean_date = html.unescape(raw_date).strip()
+                    ts = 0.0
+                    date_str = ""
+                    has_date = False
+                    try:
+                        dt = email.utils.parsedate_to_datetime(clean_date)
+                        ts = float(dt.timestamp())
+                        date_str = datetime.fromtimestamp(ts, beijing_tz).strftime("%Y-%m-%d")
+                        has_date = True
+                    except Exception:
+                        pass
+                    results.append({
+                        "title": clean_title,
+                        "link": clean_link,
+                        "date": date_str,
+                        "timestamp": ts,
+                        "has_explicit_date": has_date
+                    })
+    except Exception as e:
+        print(f"[linux.do 兜底] Jina HTML 提取失败: {e}")
+
+    # 策略 2：JSON 格式化兜底解析
+    if not results:
+        try:
+            req = urllib.request.Request(jina_url, headers={"Accept": "application/json", "User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                if resp.status == 200:
+                    payload = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                    content = payload.get("data", {}).get("content", "")
+                    pattern = r"###\s*\[(.*?)\]\((https://linux\.do/t/topic/\d+)\)[\s\S]*?([A-Za-z]+,\s*\d+\s+[A-Za-z]+\s+\d+\s+\d+:\d+:\d+\s+[+-]\d+)"
+                    matches = re.findall(pattern, content)
+                    beijing_tz = pytz.timezone("Asia/Shanghai")
+                    for title, link, raw_date in matches:
+                        clean_title = title.strip().replace("\n", "").replace("\r", "")
+                        clean_link = link.strip()
+                        ts = 0.0
+                        date_str = ""
+                        has_date = False
+                        try:
+                            dt = email.utils.parsedate_to_datetime(raw_date.strip())
+                            ts = float(dt.timestamp())
+                            date_str = datetime.fromtimestamp(ts, beijing_tz).strftime("%Y-%m-%d")
+                            has_date = True
+                        except Exception:
+                            pass
+                        results.append({
+                            "title": clean_title,
+                            "link": clean_link,
+                            "date": date_str,
+                            "timestamp": ts,
+                            "has_explicit_date": has_date
+                        })
+        except Exception as e:
+            print(f"[linux.do 兜底] Jina JSON 提取失败: {e}")
+
+    return results[:10]
+
 def get_rss_info(feed_url, index, rss_info_list):
     result = {"result": []}
     
@@ -75,16 +158,21 @@ def get_rss_info(feed_url, index, rss_info_list):
             if proxies:
                 req_kwargs["proxies"] = proxies
 
-            if "linux.do" in actual_url:
-                req_kwargs["headers"] = req_kwargs.get("headers", DEFAULT_HEADERS).copy()
-                req_kwargs["headers"]["User-Agent"] = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
-
             try:
                 # 使用较新的 Chrome 浏览器指纹绕过 Cloudflare 防火墙
                 resp = requests.get(actual_url, impersonate="chrome124", **req_kwargs)
             except TypeError:
                 # 若降级为原生 requests，无 impersonate 参数
                 resp = requests.get(actual_url, **req_kwargs)
+
+            # 针对 linux.do 遇到 429/403 频控，立刻切换至专用兜底服务，不进行无谓重试
+            if "linux.do" in actual_url and resp.status_code in {403, 429}:
+                print(f"[{index}] {feed_url} 遭遇 Cloudflare 频控/拦截 (HTTP {resp.status_code})，切换至专用兜底抓取...")
+                fallback_entries = fetch_linux_do_fallback(actual_url)
+                if fallback_entries:
+                    result["result"] = fallback_entries
+                    print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
+                    break
 
             # 遇到明确拒绝或不存在的状态码，立即快速熔断，绝不无效重试
             if resp.status_code in NON_RETRYABLE_CODES:
@@ -118,8 +206,23 @@ def get_rss_info(feed_url, index, rss_info_list):
             break
         except Exception as e:
             print(f"[{index}] {feed_url} 第 {i+1} 次请求出错==>>", e)
+            if "linux.do" in actual_url and ("429" in str(e) or "403" in str(e)):
+                print(f"[{index}] {feed_url} 遭遇异常阻断，切换至专用兜底抓取...")
+                fallback_entries = fetch_linux_do_fallback(actual_url)
+                if fallback_entries:
+                    result["result"] = fallback_entries
+                    print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
+                    break
             if i < 2:
                 time.sleep(1)
+
+    # 兜底守卫：若常规循环结束后 linux.do 仍未获取到数据，最后执行一次兜底
+    if not result["result"] and "linux.do" in actual_url:
+        print(f"[{index}] {feed_url} 主流程未获取到数据，触发最终兜底抓取...")
+        fallback_entries = fetch_linux_do_fallback(actual_url)
+        if fallback_entries:
+            result["result"] = fallback_entries
+            print(f"[{index}] {feed_url} 最终兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
 
     rss_info_list[index] = result["result"]
     print("本次爬取==》》", feed_url, "<<<===", index, len(result["result"]))
