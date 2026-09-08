@@ -332,12 +332,11 @@ def replace_readme():
     po.join()
     print("----结束----", rss_info_list)
 
-    # 动态自适应时间窗口：以上次 README 生产时间为下限（最大28小时，防止重复推送并容忍排队延迟）
-    TIME_WINDOW_SECONDS = 28 * 3600
+    # 固定 24 小时自然滑动窗口：判定距今 24 小时内发布的文章为新文章（与邮件标题声明的“保质期 24 小时”严格对齐）
+    TIME_WINDOW_SECONDS = 24 * 3600
     FUTURE_TOLERANCE_SECONDS = 3600
     now_ts = time.time()
-    last_run_ts = get_last_run_timestamp()
-    window_start_ts = min(max(now_ts - TIME_WINDOW_SECONDS, last_run_ts), now_ts) if last_run_ts else (now_ts - TIME_WINDOW_SECONDS)
+    window_start_ts = now_ts - TIME_WINDOW_SECONDS
 
     def is_new_entry(item):
         try:
