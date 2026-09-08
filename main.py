@@ -75,6 +75,10 @@ def get_rss_info(feed_url, index, rss_info_list):
             if proxies:
                 req_kwargs["proxies"] = proxies
 
+            if "linux.do" in actual_url:
+                req_kwargs["headers"] = req_kwargs.get("headers", DEFAULT_HEADERS).copy()
+                req_kwargs["headers"]["User-Agent"] = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+
             try:
                 # 使用较新的 Chrome 浏览器指纹绕过 Cloudflare 防火墙
                 resp = requests.get(actual_url, impersonate="chrome124", **req_kwargs)
