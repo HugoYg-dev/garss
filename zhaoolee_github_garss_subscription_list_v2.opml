@@ -2,7 +2,7 @@
 <head>
 <title>嘎!RSS</title>
 <dateCreated>Sat, 04 Dec 2021 04:18:35 GMT</dateCreated>
-<dateModified>Thu, 10 Sep 2026 00:16:59 GMT</dateModified>
+<dateModified>Thu, 10 Sep 2026 04:38:31 GMT</dateModified>
 <ownerName>zhaoolee</ownerName>
 <ownerEmail>zhaoolee@gmail.com</ownerEmail>
 <expansionState/>
@@ -201,7 +201,6 @@
 <outline  text="知乎" description="知乎每日精选" htmlUrl="https://www.zhihu.com/rss" language="unknown" title="知乎" type="rss" version="RSS2" xmlUrl="https://www.zhihu.com/rss"/>
 <outline  text="湾区日报" description="关注创业与技术，每天推送3到5篇优质英文文章" htmlUrl="https://wanqu.co/feed/" language="unknown" title="湾区日报" type="rss" version="RSS2" xmlUrl="https://wanqu.co/feed/"/>
 <outline  text="爱范儿" description="让未来触手可及" htmlUrl="https://www.ifanr.com/feed" language="unknown" title="爱范儿" type="rss" version="RSS2" xmlUrl="https://www.ifanr.com/feed"/>
-<outline  text="小众软件" description="小众软件RSS" htmlUrl="https://www.appinn.com/feed/" language="unknown" title="小众软件" type="rss" version="RSS2" xmlUrl="https://www.appinn.com/feed/"/>
 <outline  text="199IT" description="互联网数据资讯网" htmlUrl="https://www.199it.com/feed" language="unknown" title="199IT" type="rss" version="RSS2" xmlUrl="https://www.199it.com/feed"/>
 <outline  text="IT之家" description="IT之家 - 软媒旗下网站" htmlUrl="https://www.ithome.com/rss" language="unknown" title="IT之家" type="rss" version="RSS2" xmlUrl="https://www.ithome.com/rss"/>
 <outline  text="HelloGitHub 月刊" description="一切出于兴趣。兴趣是最好的老师，HelloGitHub 就是帮你找到编程的兴趣。" htmlUrl="https://hellogithub.com/rss" language="unknown" title="HelloGitHub 月刊" type="rss" version="RSS2" xmlUrl="https://hellogithub.com/rss"/>

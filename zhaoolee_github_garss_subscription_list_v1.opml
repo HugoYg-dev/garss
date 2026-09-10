@@ -380,8 +380,6 @@
             xmlUrl="https://wanqu.co/feed/" htmlUrl="https://wanqu.co/feed/"/>
       <outline text="爱范儿" title="爱范儿" type="rss"  
             xmlUrl="https://www.ifanr.com/feed" htmlUrl="https://www.ifanr.com/feed"/>
-      <outline text="小众软件" title="小众软件" type="rss"  
-            xmlUrl="https://www.appinn.com/feed/" htmlUrl="https://www.appinn.com/feed/"/>
       <outline text="199IT" title="199IT" type="rss"  
             xmlUrl="https://www.199it.com/feed" htmlUrl="https://www.199it.com/feed"/>
       <outline text="IT之家" title="IT之家" type="rss"  
