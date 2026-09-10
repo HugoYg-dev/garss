@@ -10,6 +10,7 @@ import yagmail
 import json
 import html
 import shutil
+from collections import OrderedDict
 from urllib.parse import urlparse
 import urllib.request
 from multiprocessing import Pool, Manager
@@ -294,36 +295,161 @@ def get_last_run_timestamp(readme_path="README.md"):
         pass
     return None
 
+CATEGORY_ICONS = {
+    "软件工具": "🛠️",
+    "活着的个人独立博客": "✍️",
+    "数码": "📱",
+    "IT团队博客": "💻",
+    "公司官方新闻": "🏢",
+    "互联网类": "🌐",
+    "金融类": "📈",
+    "科技类": "🔬",
+    "学习类": "📚",
+    "学术类": "🎓",
+    "生活类": "☕",
+    "设计类": "🎨",
+    "内容平台": "📰",
+    "影视资源": "🎬",
+    "资源类": "📦",
+    "Telegram优质频道RSS订阅": "✈️"
+}
+
+def parse_readme_categories_and_feeds(content):
+    """
+    解析 EditREADME.md 内容，提取所有分类与关联的 RSS 源信息，保持原始出现顺序
+    返回:
+      categories: OrderedDict[cat_name -> {'id': cat_id, 'feeds': [feed_dict]}]
+      all_feeds: list[feed_dict]
+    """
+    categories = OrderedDict()
+    all_feeds = []
+    current_cat_name = "未分类"
+    current_cat_id = "未分类"
+
+    for line in content.splitlines(True):
+        m_cat = re.search(r'<h2 id=[\"\x27]?([^\"\x27>]+)[\"\x27]?>([\s\S]*?)</h2>', line)
+        if m_cat and '|' in line:
+            current_cat_id = m_cat.group(1).strip()
+            current_cat_name = m_cat.group(2).strip()
+            if current_cat_name not in categories:
+                categories[current_cat_name] = {'id': current_cat_id, 'feeds': []}
+            continue
+
+        if '{{latest_content}}' in line and '[订阅地址]' in line:
+            m_link = re.findall(r'\[订阅地址\]\((.*?)\)', line)
+            m_cols = re.match(r'\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*(.*?)\s*\|\s*.*?\[订阅地址\]\((.*?)\).*?\|', line)
+            feed_name = m_cols.group(2).strip() if m_cols else ''
+            link = m_link[0].strip() if m_link else ''
+
+            feed_item = {
+                'index': len(all_feeds),
+                'category': current_cat_name,
+                'category_id': current_cat_id,
+                'name': feed_name,
+                'link': link,
+                'line': line
+            }
+            all_feeds.append(feed_item)
+            if current_cat_name in categories:
+                categories[current_cat_name]['feeds'].append(feed_item)
+
+    return categories, all_feeds
+
+def render_categorized_news(categorized_news, total_new_count):
+    """渲染具有分类结构、导航速览及源站标注的邮件/README 新闻索引 HTML"""
+    if not categorized_news or total_new_count == 0:
+        return '<div style="padding: 16px; color: #8C7B75; font-size: 14px;">今日暂无新出炉的小蛋糕~</div>'
+
+    html_parts = []
+
+    # 1. 顶部分类速览卡片（提供分类汇总与锚点跳转导航）
+    nav_items = []
+    for cat_name, cat_data in categorized_news.items():
+        articles = cat_data.get('articles', [])
+        if not articles:
+            continue
+        cat_id = cat_data.get('id', cat_name)
+        icon = CATEGORY_ICONS.get(cat_name, '📂')
+        nav_items.append(
+            f'<a href="#cat-{html.escape(cat_id, quote=True)}" style="color: #584D49; text-decoration: none; border-bottom: 1px dashed #A69992; margin-right: 12px; display: inline-block;">'
+            f'{icon} {html.escape(cat_name)} <span style="font-size: 12px; color: #8C7B75;">({len(articles)})</span></a>'
+        )
+
+    if nav_items:
+        nav_html = (
+            '<div style="margin: 14px 0 22px 0; padding: 12px 14px; background-color: #F7F5F0; border: 1px solid #E8E2D9; border-radius: 6px; font-size: 13px; line-height: 2; color: #584D49;">'
+            '<div style="font-weight: bold; margin-bottom: 4px;">📑 今日分类速览：</div>'
+            + ''.join(nav_items)
+            + '</div>'
+        )
+        html_parts.append(nav_html)
+
+    # 2. 循环各分类及分类下文章
+    for cat_name, cat_data in categorized_news.items():
+        articles = cat_data.get('articles', [])
+        if not articles:
+            continue
+        cat_id = cat_data.get('id', cat_name)
+        icon = CATEGORY_ICONS.get(cat_name, '📂')
+
+        # 分类标题栏
+        cat_header_html = (
+            f'<div id="cat-{html.escape(cat_id, quote=True)}" style="margin-top: 24px; margin-bottom: 8px; padding: 7px 12px; background-color: #584D49; color: #FAF6EA; border-radius: 4px; font-size: 15px; font-weight: bold;">'
+            f'{icon} {html.escape(cat_name)} <span style="font-size: 12px; font-weight: normal; color: #DCD0C7;">（共 {len(articles)} 篇）</span>'
+            '</div>'
+        )
+        html_parts.append(cat_header_html)
+
+        # 分类内文章列表
+        for idx, art in enumerate(articles):
+            atom_link = art['link']
+            title = art['title']
+            source_name = art.get('feed_name', '').strip()
+            global_num = art['global_num']
+
+            source_tag = f'【{html.escape(source_name)}】 ' if source_name else ''
+            link_content = f'🌈 ‣ {source_tag}{html.escape(title)} | 第{global_num}篇'
+
+            bg_style = "background-color:#FAF6EA;" if (idx % 2 == 0) else ""
+            row_html = (
+                f'<div style="line-height:3;{bg_style}">'
+                f'<a href="{html.escape(atom_link, quote=True)}" style="line-height:2;text-decoration:none;display:block;color:#584D49;">'
+                f'{link_content}'
+                f'</a></div>'
+            )
+            html_parts.append(row_html)
+
+    return ''.join(html_parts)
+
 def replace_readme():
     new_edit_readme_md = ["", ""]
-    current_date_news_index = [""]
 
     # 读取EditREADME.md
     print("replace_readme")
-    new_num = 0
-    with open(os.path.join(os.getcwd(),"EditREADME.md"),'r') as load_f:
+    with open(os.path.join(os.getcwd(),"EditREADME.md"),'r', encoding="utf-8") as load_f:
         edit_readme_md = load_f.read()
 
     new_edit_readme_md[0] = edit_readme_md
-    before_info_list =  re.findall(r'\{\{latest_content\}\}.*\[订阅地址\]\(.*\)' ,edit_readme_md)
+
+    # 解析所有分类与 feed 对应关系
+    categories, all_feeds = parse_readme_categories_and_feeds(edit_readme_md)
+    total_feeds_count = len(all_feeds)
+
     # 填充统计RSS数量
-    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{rss_num}}", str(len(before_info_list)))
+    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{rss_num}}", str(total_feeds_count))
     # 填充统计时间
     ga_rss_datetime = datetime.fromtimestamp(int(time.time()),pytz.timezone('Asia/Shanghai')).strftime('%Y-%m-%d %H:%M:%S')
     new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{ga_rss_datetime}}", str(ga_rss_datetime))
 
     # 使用进程池进行数据获取，获得rss_info_list
-    before_info_list_len = len(before_info_list)
-    rss_info_list = Manager().list(range(before_info_list_len))
+    rss_info_list = Manager().list(range(total_feeds_count))
     print('初始化完毕==》', rss_info_list)
 
     # 创建一个最多开启8进程的进程池
     po = Pool(8)
 
-    for index, before_info in enumerate(before_info_list):
-        # 获取link
-        link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
-        po.apply_async(get_rss_info,(link, index, rss_info_list))
+    for feed_item in all_feeds:
+        po.apply_async(get_rss_info, (feed_item["link"], feed_item["index"], rss_info_list))
 
     # 关闭进程池,不再接收新的任务,开始执行任务
     po.close()
@@ -357,10 +483,23 @@ def replace_readme():
         path = p.path.rstrip("/")
         return f"{p.scheme.lower()}://{p.netloc.lower()}{path}" + (f"?{p.query}" if p.query else "")
 
-    for index, before_info in enumerate(before_info_list):
-        # 获取link
-        link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
-        # 生成超链接
+    # 初始化分类文章收集器，保持分类出现顺序
+    categorized_news = OrderedDict()
+    for cat_name, cat_data in categories.items():
+        categorized_news[cat_name] = {
+            "id": cat_data["id"],
+            "articles": []
+        }
+
+    global_new_num = 0
+
+    for feed_item in all_feeds:
+        index = feed_item["index"]
+        cat_name = feed_item["category"]
+        feed_name = feed_item["name"]
+        link = feed_item["link"]
+        raw_line = feed_item["line"]
+
         rss_info = rss_info_list[index]
         if not isinstance(rss_info, list):
             rss_info = []
@@ -370,7 +509,7 @@ def replace_readme():
         scheme_netloc_url = str(parse_result.scheme) + "://" + str(parse_result.netloc)
         latest_content = f"[暂无法通过爬虫获取信息, 点击进入源网站主页]({scheme_netloc_url})"
 
-        # 加入到索引
+        # 加入到分类索引
         try:
             for rss_info_atom in rss_info:
                 if is_new_entry(rss_info_atom):
@@ -379,11 +518,16 @@ def replace_readme():
                     if not norm_link or norm_link in seen_links:
                         continue
                     seen_links.add(norm_link)
-                    new_num = new_num + 1
-                    if (new_num % 2) == 0:
-                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;' ><a href='" + html.escape(atom_link, quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
-                    else:
-                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;background-color:#FAF6EA;' ><a href='" + html.escape(atom_link, quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
+                    global_new_num += 1
+
+                    article_data = {
+                        "link": atom_link,
+                        "title": rss_info_atom.get("title", ""),
+                        "feed_name": feed_name,
+                        "date": rss_info_atom.get("date", ""),
+                        "global_num": global_new_num,
+                    }
+                    categorized_news[cat_name]["articles"].append(article_data)
 
         except Exception as e:
             print("An exception occurred in news index:", e)
@@ -394,29 +538,28 @@ def replace_readme():
         if len(rss_info) > 1:
             latest_content = latest_content + "<br/>" + format_item_link(rss_info[1], is_new_entry(rss_info[1]))
 
-        # 生成after_info
-        after_info = before_info.replace("{{latest_content}}", latest_content)
-        print("====latest_content==>", latest_content)
-        # 替换edit_readme_md中的内容
-        new_edit_readme_md[0] = new_edit_readme_md[0].replace(before_info, after_info)
-    
-    # 替换EditREADME中的索引
-    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{news}}", current_date_news_index[0])
-    # 替换EditREADME中的新文章数量索引
-    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{new_num}}", str(new_num))
-    # 添加CDN
+        # 生成更新后的表格行并替换
+        new_line = raw_line.replace("{{latest_content}}", latest_content, 1)
+        new_edit_readme_md[0] = new_edit_readme_md[0].replace(raw_line, new_line, 1)
+
+    # 渲染分类新闻索引 HTML
+    news_html = render_categorized_news(categorized_news, global_new_num)
+
+    # 替换 EditREADME 中的索引
+    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{news}}", news_html)
+    # 替换 EditREADME 中的新文章数量索引
+    new_edit_readme_md[0] = new_edit_readme_md[0].replace("{{new_num}}", str(global_new_num))
+    # 添加 CDN
     new_edit_readme_md[0] = new_edit_readme_md[0].replace("./_media", "https://cdn.jsdelivr.net/gh/zhaoolee/garss/_media")
-        
-    # 将新内容
-    with open(os.path.join(os.getcwd(),"README.md"),'w') as load_f:
+
+    # 将新内容写入 README.md
+    with open(os.path.join(os.getcwd(),"README.md"),'w', encoding="utf-8") as load_f:
         load_f.write(new_edit_readme_md[0])
-    
 
     mail_re = r'邮件内容区开始>([.\S\s]*)<邮件内容区结束'
     reResult = re.findall(mail_re, new_edit_readme_md[0])
     new_edit_readme_md[1] = reResult
 
-    
     return new_edit_readme_md
 
 # 将README.md复制到docs中
