@@ -348,6 +348,15 @@ def replace_readme():
         # 无有效时间戳的文章坚决不标记为新，根除幽灵文章每日重复推送
         return False
 
+    seen_links = set()
+
+    def normalize_link(url):
+        if not url:
+            return ""
+        p = urlparse(url.strip())
+        path = p.path.rstrip("/")
+        return f"{p.scheme.lower()}://{p.netloc.lower()}{path}" + (f"?{p.query}" if p.query else "")
+
     for index, before_info in enumerate(before_info_list):
         # 获取link
         link = re.findall(r'\[订阅地址\]\((.*)\)', before_info)[0]
@@ -365,11 +374,16 @@ def replace_readme():
         try:
             for rss_info_atom in rss_info:
                 if is_new_entry(rss_info_atom):
+                    atom_link = rss_info_atom.get("link", "").strip()
+                    norm_link = normalize_link(atom_link)
+                    if not norm_link or norm_link in seen_links:
+                        continue
+                    seen_links.add(norm_link)
                     new_num = new_num + 1
                     if (new_num % 2) == 0:
-                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;' ><a href='" + html.escape(rss_info_atom["link"], quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
+                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;' ><a href='" + html.escape(atom_link, quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
                     else:
-                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;background-color:#FAF6EA;' ><a href='" + html.escape(rss_info_atom["link"], quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
+                        current_date_news_index[0] = current_date_news_index[0] + "<div style='line-height:3;background-color:#FAF6EA;' ><a href='" + html.escape(atom_link, quote=True) + "' " + 'style="line-height:2;text-decoration:none;display:block;color:#584D49;">' + "🌈 ‣ " + html.escape(rss_info_atom["title"]) + " | 第" + str(new_num) +"篇" + "</a></div>"
 
         except Exception as e:
             print("An exception occurred in news index:", e)
