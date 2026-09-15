@@ -290,6 +290,8 @@
             xmlUrl="https://simonwillison.net/atom/links/" htmlUrl="https://simonwillison.net/atom/links/"/>
       <outline text="肖恩聊技术" title="肖恩聊技术" type="rss"  
             xmlUrl="https://shawnxie.top/rss.xml" htmlUrl="https://shawnxie.top/rss.xml"/>
+      <outline text="哥布林学者" title="哥布林学者" type="rss"  
+            xmlUrl="https://feed.cnblogs.com/blog/u/853676/rss/" htmlUrl="https://feed.cnblogs.com/blog/u/853676/rss/"/>
       <outline text="少数派" title="少数派" type="rss"  
             xmlUrl="https://sspai.com/feed" htmlUrl="https://sspai.com/feed"/>
       <outline text="数字尾巴" title="数字尾巴" type="rss"  

@@ -2,7 +2,7 @@
 <head>
 <title>嘎!RSS</title>
 <dateCreated>Sat, 04 Dec 2021 04:18:35 GMT</dateCreated>
-<dateModified>Tue, 15 Sep 2026 00:39:40 GMT</dateModified>
+<dateModified>Tue, 15 Sep 2026 07:49:37 GMT</dateModified>
 <ownerName>zhaoolee</ownerName>
 <ownerEmail>zhaoolee@gmail.com</ownerEmail>
 <expansionState/>
@@ -156,6 +156,7 @@
 <outline  text="宝玉" description="" htmlUrl="https://baoyu.io/feed.xml" language="unknown" title="宝玉" type="rss" version="RSS2" xmlUrl="https://baoyu.io/feed.xml"/>
 <outline  text="Simon Willison" description="" htmlUrl="https://simonwillison.net/atom/links/" language="unknown" title="Simon Willison" type="rss" version="RSS2" xmlUrl="https://simonwillison.net/atom/links/"/>
 <outline  text="肖恩聊技术" description="" htmlUrl="https://shawnxie.top/rss.xml" language="unknown" title="肖恩聊技术" type="rss" version="RSS2" xmlUrl="https://shawnxie.top/rss.xml"/>
+<outline  text="哥布林学者" description="" htmlUrl="https://feed.cnblogs.com/blog/u/853676/rss/" language="unknown" title="哥布林学者" type="rss" version="RSS2" xmlUrl="https://feed.cnblogs.com/blog/u/853676/rss/"/>
 <outline  text="少数派" description="少数派致力于更好地运用数字产品或科学方法，帮助用户提升工作效率和生活品质" htmlUrl="https://sspai.com/feed" language="unknown" title="少数派" type="rss" version="RSS2" xmlUrl="https://sspai.com/feed"/>
 <outline  text="数字尾巴" description="分享美好数字生活" htmlUrl="https://www.dgtle.com/rss/dgtle.xml" language="unknown" title="数字尾巴" type="rss" version="RSS2" xmlUrl="https://www.dgtle.com/rss/dgtle.xml"/>
 <outline  text="Chiphell" description="分享与交流用户体验" htmlUrl="https://www.chiphell.com/portal.php?mod=rss" language="unknown" title="Chiphell" type="rss" version="RSS2" xmlUrl="https://www.chiphell.com/portal.php?mod=rss"/>
