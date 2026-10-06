@@ -322,6 +322,8 @@
             xmlUrl="https://www.apple.com/newsroom/rss-feed.rss" htmlUrl="https://www.apple.com/newsroom/rss-feed.rss"/>
       <outline text="JinaAI" title="JinaAI" type="rss"  
             xmlUrl="https://jina.ai/feed.rss" htmlUrl="https://jina.ai/feed.rss"/>
+      <outline text="Antigravity" title="Antigravity" type="rss"  
+            xmlUrl="https://antigravity.google/blog/rss.xml" htmlUrl="https://antigravity.google/blog/rss.xml"/>
       <outline text="虎嗅" title="虎嗅" type="rss"  
             xmlUrl="https://www.huxiu.com/rss/0.xml" htmlUrl="https://www.huxiu.com/rss/0.xml"/>
       <outline text="36kr" title="36kr" type="rss"  

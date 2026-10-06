@@ -2,7 +2,7 @@
 <head>
 <title>嘎!RSS</title>
 <dateCreated>Sat, 04 Dec 2021 04:18:35 GMT</dateCreated>
-<dateModified>Tue, 06 Oct 2026 02:19:33 GMT</dateModified>
+<dateModified>Tue, 06 Oct 2026 16:47:10 GMT</dateModified>
 <ownerName>zhaoolee</ownerName>
 <ownerEmail>zhaoolee@gmail.com</ownerEmail>
 <expansionState/>
@@ -172,6 +172,7 @@
 <outline  text="HuggingFace Blog" description="HuggingFace's Blog" htmlUrl="https://huggingface.co/blog/feed.xml" language="unknown" title="HuggingFace Blog" type="rss" version="RSS2" xmlUrl="https://huggingface.co/blog/feed.xml"/>
 <outline  text="Apple新闻" description="Apple官方消息" htmlUrl="https://www.apple.com/newsroom/rss-feed.rss" language="unknown" title="Apple新闻" type="rss" version="RSS2" xmlUrl="https://www.apple.com/newsroom/rss-feed.rss"/>
 <outline  text="JinaAI" description="JinaAI" htmlUrl="https://jina.ai/feed.rss" language="unknown" title="JinaAI" type="rss" version="RSS2" xmlUrl="https://jina.ai/feed.rss"/>
+<outline  text="Antigravity" description="Antigravity" htmlUrl="https://antigravity.google/blog/rss.xml" language="unknown" title="Antigravity" type="rss" version="RSS2" xmlUrl="https://antigravity.google/blog/rss.xml"/>
 <outline  text="虎嗅" description="虎嗅网新闻" htmlUrl="https://www.huxiu.com/rss/0.xml" language="unknown" title="虎嗅" type="rss" version="RSS2" xmlUrl="https://www.huxiu.com/rss/0.xml"/>
 <outline  text="36kr" description="36氪" htmlUrl="https://www.36kr.com/feed" language="unknown" title="36kr" type="rss" version="RSS2" xmlUrl="https://www.36kr.com/feed"/>
 <outline  text="微软亚洲研究院" description="微软亚洲研究院技术博客" htmlUrl="https://www.msra.cn/feed" language="unknown" title="微软亚洲研究院" type="rss" version="RSS2" xmlUrl="https://www.msra.cn/feed"/>

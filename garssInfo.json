@@ -796,6 +796,11 @@
             "xmlUrl": "https://jina.ai/feed.rss"
         },
         {
+            "description": "Antigravity",
+            "title": "Antigravity",
+            "xmlUrl": "https://antigravity.google/blog/rss.xml"
+        },
+        {
             "description": "虎嗅网新闻",
             "title": "虎嗅",
             "xmlUrl": "https://www.huxiu.com/rss/0.xml"
