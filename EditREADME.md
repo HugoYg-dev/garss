@@ -191,6 +191,7 @@
 | <h2 id="公司官方新闻">公司官方新闻</h2> |  |   |  |
 | C001 | Apple新闻 | Apple官方消息 | {{latest_content}}  |  [订阅地址](https://www.apple.com/newsroom/rss-feed.rss) |  
 | C002 | JinaAI | JinaAI | {{latest_content}}  |  [订阅地址](https://jina.ai/feed.rss) |  
+| C003 | Antigravity | Antigravity | {{latest_content}}  |  [订阅地址](https://antigravity.google/blog/rss.xml) |  
 | <h2 id="互联网类">互联网类</h2> |  |   |  |
 | H001 | 虎嗅 | 虎嗅网新闻 | {{latest_content}}  |  [订阅地址](https://www.huxiu.com/rss/0.xml) |  
 | H002 | 36kr | 36氪 | {{latest_content}}  |  [订阅地址](https://www.36kr.com/feed) |  
