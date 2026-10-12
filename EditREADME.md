@@ -188,6 +188,7 @@
 | I009 | JDC  | 京东设计中心 | {{latest_content}}  |  [订阅地址](https://jdc.jd.com/feed)  | 
 | I010 | 凹凸实验室  | 凹凸技术揭秘 · 技术精进与业务发展两不误 | {{latest_content}}  |  [订阅地址](https://aotu.io/atom.xml)  | 
 | I011 | HuggingFace Blog  | HuggingFace's Blog | {{latest_content}}  |  [订阅地址](https://huggingface.co/blog/feed.xml)  | 
+| I012 | Microsoft-CommandLine  | Microsoft | {{latest_content}}  |  [订阅地址](https://commandline.microsoft.com/feed)  | 
 | <h2 id="公司官方新闻">公司官方新闻</h2> |  |   |  |
 | C001 | Apple新闻 | Apple官方消息 | {{latest_content}}  |  [订阅地址](https://www.apple.com/newsroom/rss-feed.rss) |  
 | C002 | JinaAI | JinaAI | {{latest_content}}  |  [订阅地址](https://jina.ai/feed.rss) |  
