@@ -786,6 +786,11 @@
             "xmlUrl": "https://huggingface.co/blog/feed.xml"
         },
         {
+            "description": "Microsoft",
+            "title": "Microsoft-CommandLine",
+            "xmlUrl": "https://commandline.microsoft.com/feed"
+        },
+        {
             "description": "Apple官方消息",
             "title": "Apple新闻",
             "xmlUrl": "https://www.apple.com/newsroom/rss-feed.rss"
