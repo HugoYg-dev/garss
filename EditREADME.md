@@ -173,6 +173,7 @@
 | <div id="B134" style="text-align: center;"><span>B134</span></div> | Simon Willison |   | {{latest_content}} | [订阅地址](https://simonwillison.net/atom/links/) |
 | <div id="B135" style="text-align: center;"><span>B135</span></div> | 肖恩聊技术 |   | {{latest_content}} | [订阅地址](https://shawnxie.top/rss.xml) |
 | <div id="B136" style="text-align: center;"><span>B136</span></div> | 哥布林学者 |   | {{latest_content}} | [订阅地址](https://feed.cnblogs.com/blog/u/853676/rss/) |
+| <div id="B137" style="text-align: center;"><span>B137</span></div> | MoonOut | 博客园博主，专注 AI、大模型与学术论文速读笔记 | {{latest_content}} | [订阅地址](https://www.cnblogs.com/moonout/rss) |
 | <h2 id="数码">数码</h2> |  |   |  |
 | D001 | 少数派 | 少数派致力于更好地运用数字产品或科学方法，帮助用户提升工作效率和生活品质 | {{latest_content}}  |  [订阅地址](https://sspai.com/feed) | 
 | D002 | 数字尾巴 | 分享美好数字生活 | {{latest_content}}  |  [订阅地址](https://www.dgtle.com/rss/dgtle.xml) | 
@@ -189,6 +190,8 @@
 | I010 | 凹凸实验室  | 凹凸技术揭秘 · 技术精进与业务发展两不误 | {{latest_content}}  |  [订阅地址](https://aotu.io/atom.xml)  | 
 | I011 | HuggingFace Blog  | HuggingFace's Blog | {{latest_content}}  |  [订阅地址](https://huggingface.co/blog/feed.xml)  | 
 | I012 | Microsoft-CommandLine  | Microsoft | {{latest_content}}  |  [订阅地址](https://commandline.microsoft.com/feed)  | 
+| I013 | LLaMA Factory Blog | 开源大模型统一高效微调框架技术博客 | {{latest_content}}  |  [订阅地址](https://blog.llamafactory.net/index.xml)  | 
+| I014 | Anthropic Engineering | Anthropic 工程与技术博客 | {{latest_content}}  |  [订阅地址](https://rsshub.app/anthropic/engineering)  | 
 | <h2 id="公司官方新闻">公司官方新闻</h2> |  |   |  |
 | C001 | Apple新闻 | Apple官方消息 | {{latest_content}}  |  [订阅地址](https://www.apple.com/newsroom/rss-feed.rss) |  
 | C002 | JinaAI | JinaAI | {{latest_content}}  |  [订阅地址](https://jina.ai/feed.rss) |  

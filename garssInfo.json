@@ -721,6 +721,11 @@
             "xmlUrl": "https://feed.cnblogs.com/blog/u/853676/rss/"
         },
         {
+            "description": "博客园博主，专注 AI、大模型与学术论文速读笔记",
+            "title": "MoonOut",
+            "xmlUrl": "https://www.cnblogs.com/moonout/rss"
+        },
+        {
             "description": "少数派致力于更好地运用数字产品或科学方法，帮助用户提升工作效率和生活品质",
             "title": "少数派",
             "xmlUrl": "https://sspai.com/feed"
@@ -789,6 +794,16 @@
             "description": "Microsoft",
             "title": "Microsoft-CommandLine",
             "xmlUrl": "https://commandline.microsoft.com/feed"
+        },
+        {
+            "description": "开源大模型统一高效微调框架技术博客",
+            "title": "LLaMA Factory Blog",
+            "xmlUrl": "https://blog.llamafactory.net/index.xml"
+        },
+        {
+            "description": "Anthropic 工程与技术博客",
+            "title": "Anthropic Engineering",
+            "xmlUrl": "https://rsshub.app/anthropic/engineering"
         },
         {
             "description": "Apple官方消息",
