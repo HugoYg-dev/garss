@@ -137,6 +137,116 @@ def fetch_linux_do_fallback(feed_url="https://linux.do/latest.rss"):
 
     return results[:10]
 
+def fetch_v2ex_fallback(feed_url="https://www.v2ex.com/index.xml"):
+    """
+    针对 v2ex.com 在 Cloudflare 盾/质询拦截（返回 HTTP 403 / cf-mitigated: challenge）时的专用兜底抓取方案。
+    多级高可用降级策略：
+      策略 1: 官方公开 JSON API (https://www.v2ex.com/api/topics/latest.json)，用标准 urllib 请求（不携带浏览器特征，不触发 TLS 指纹校验）。
+      策略 2: 原生 urllib 请求官方 index.xml（使用 Python 原生 TLS 栈，避免 curl_cffi Chrome 伪装指纹冲突）。
+      策略 3: 公开 RSSHub 镜像 (https://rsshub.rss.tips/v2ex/topics/latest 等)。
+    """
+    results = []
+    beijing_tz = pytz.timezone("Asia/Shanghai")
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    proxies = {}
+    proxy_url = os.environ.get("RSS_PROXY") or os.environ.get("HTTPS_PROXY")
+    if not proxy_url:
+        sys_proxies = urllib.request.getproxies()
+        proxy_url = sys_proxies.get("https") or sys_proxies.get("http")
+    if proxy_url:
+        proxies = {"http": proxy_url, "https": proxy_url}
+
+    handler = urllib.request.ProxyHandler(proxies) if proxies else None
+    opener = urllib.request.build_opener(handler) if handler else urllib.request.build_opener()
+
+    # 策略 1：官方公开 API topics/latest.json (最稳定、结构标准、秒级时间戳)
+    try:
+        api_url = "https://www.v2ex.com/api/topics/latest.json"
+        req = urllib.request.Request(api_url, headers=headers)
+        with opener.open(req, timeout=12) as resp:
+            if resp.status == 200:
+                topics = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                for t in topics:
+                    node_title = t.get("node", {}).get("title", "")
+                    title_prefix = f"[{node_title}] " if node_title else ""
+                    raw_title = t.get("title", "").replace("\n", "").replace("\r", "")
+                    full_title = f"{title_prefix}{raw_title}"
+                    topic_id = t.get("id")
+                    replies = t.get("replies", 0)
+                    link = f"https://www.v2ex.com/t/{topic_id}#reply{replies}"
+                    ts = float(t.get("created", 0))
+                    date_str = ""
+                    has_date = False
+                    if ts > 0:
+                        date_str = datetime.fromtimestamp(ts, beijing_tz).strftime("%Y-%m-%d")
+                        has_date = True
+                    results.append({
+                        "title": full_title,
+                        "link": link,
+                        "date": date_str,
+                        "timestamp": ts,
+                        "has_explicit_date": has_date
+                    })
+                if results:
+                    print(f"[v2ex 兜底] 策略 1 (官方 JSON API) 成功获取 {len(results)} 条帖子。")
+    except Exception as e:
+        print(f"[v2ex 兜底] 策略 1 (官方 JSON API) 失败: {e}")
+
+    # 策略 2：原生 urllib 抓取 index.xml
+    if not results:
+        try:
+            req = urllib.request.Request(feed_url, headers=headers)
+            with opener.open(req, timeout=12) as resp:
+                if resp.status == 200:
+                    feed = feedparser.parse(resp.read())
+                    for entrie in feed.get("entries", []):
+                        title = entrie.get("title", "").replace("\n", "").replace("\r", "")
+                        link = entrie.get("link", "")
+                        ts, date_str, has_date = parse_entry_date(entrie)
+                        results.append({
+                            "title": title,
+                            "link": link,
+                            "date": date_str,
+                            "timestamp": ts,
+                            "has_explicit_date": has_date
+                        })
+                    if results:
+                        print(f"[v2ex 兜底] 策略 2 (原生 urllib index.xml) 成功获取 {len(results)} 条帖子。")
+        except Exception as e:
+            print(f"[v2ex 兜底] 策略 2 (原生 urllib index.xml) 失败: {e}")
+
+    # 策略 3：高可用公开 RSSHub 镜像
+    if not results:
+        rsshub_candidates = [
+            "https://rsshub.rss.tips/v2ex/topics/latest",
+            f"{os.environ.get('RSSHUB_BASE_URL', 'https://rsshub.app')}/v2ex/topics/latest"
+        ]
+        for mirror_url in rsshub_candidates:
+            try:
+                req = urllib.request.Request(mirror_url, headers=headers)
+                with opener.open(req, timeout=12) as resp:
+                    if resp.status == 200:
+                        feed = feedparser.parse(resp.read())
+                        for entrie in feed.get("entries", []):
+                            title = entrie.get("title", "").replace("\n", "").replace("\r", "")
+                            link = entrie.get("link", "")
+                            ts, date_str, has_date = parse_entry_date(entrie)
+                            results.append({
+                                "title": title,
+                                "link": link,
+                                "date": date_str,
+                                "timestamp": ts,
+                                "has_explicit_date": has_date
+                            })
+                        if results:
+                            print(f"[v2ex 兜底] 策略 3 ({mirror_url}) 成功获取 {len(results)} 条帖子。")
+                            break
+            except Exception as e:
+                print(f"[v2ex 兜底] 策略 3 ({mirror_url}) 失败: {e}")
+
+    return results[:10]
+
 def get_rss_info(feed_url, index, rss_info_list):
     result = {"result": []}
     
@@ -149,6 +259,9 @@ def get_rss_info(feed_url, index, rss_info_list):
     # 代理配置探测
     proxies = {}
     proxy_url = os.environ.get("RSS_PROXY") or os.environ.get("HTTPS_PROXY")
+    if not proxy_url:
+        sys_proxies = urllib.request.getproxies()
+        proxy_url = sys_proxies.get("https") or sys_proxies.get("http")
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
 
@@ -166,10 +279,18 @@ def get_rss_info(feed_url, index, rss_info_list):
                 # 若降级为原生 requests，无 impersonate 参数
                 resp = requests.get(actual_url, **req_kwargs)
 
-            # 针对 linux.do 遇到 429/403 频控，立刻切换至专用兜底服务，不进行无谓重试
+            # 针对 linux.do 与 v2ex.com 遇到 429/403 频控/拦截，立刻切换至专用兜底服务，不进行无谓重试
             if "linux.do" in actual_url and resp.status_code in {403, 429}:
                 print(f"[{index}] {feed_url} 遭遇 Cloudflare 频控/拦截 (HTTP {resp.status_code})，切换至专用兜底抓取...")
                 fallback_entries = fetch_linux_do_fallback(actual_url)
+                if fallback_entries:
+                    result["result"] = fallback_entries
+                    print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
+                    break
+
+            if "v2ex.com" in actual_url and resp.status_code in {403, 429}:
+                print(f"[{index}] {feed_url} 遭遇 Cloudflare 频控/拦截 (HTTP {resp.status_code})，切换至专用兜底抓取...")
+                fallback_entries = fetch_v2ex_fallback(actual_url)
                 if fallback_entries:
                     result["result"] = fallback_entries
                     print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
@@ -214,13 +335,27 @@ def get_rss_info(feed_url, index, rss_info_list):
                     result["result"] = fallback_entries
                     print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
                     break
+            if "v2ex.com" in actual_url and ("429" in str(e) or "403" in str(e)):
+                print(f"[{index}] {feed_url} 遭遇异常阻断，切换至专用兜底抓取...")
+                fallback_entries = fetch_v2ex_fallback(actual_url)
+                if fallback_entries:
+                    result["result"] = fallback_entries
+                    print(f"[{index}] {feed_url} 专属兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
+                    break
             if i < 2:
                 time.sleep(1)
 
-    # 兜底守卫：若常规循环结束后 linux.do 仍未获取到数据，最后执行一次兜底
+    # 兜底守卫：若常规循环结束后 linux.do / v2ex 仍未获取到数据，最后执行一次兜底
     if not result["result"] and "linux.do" in actual_url:
         print(f"[{index}] {feed_url} 主流程未获取到数据，触发最终兜底抓取...")
         fallback_entries = fetch_linux_do_fallback(actual_url)
+        if fallback_entries:
+            result["result"] = fallback_entries
+            print(f"[{index}] {feed_url} 最终兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
+
+    if not result["result"] and "v2ex.com" in actual_url:
+        print(f"[{index}] {feed_url} 主流程未获取到数据，触发最终兜底抓取...")
+        fallback_entries = fetch_v2ex_fallback(actual_url)
         if fallback_entries:
             result["result"] = fallback_entries
             print(f"[{index}] {feed_url} 最终兜底抓取成功，获取到 {len(fallback_entries)} 条帖子。")
