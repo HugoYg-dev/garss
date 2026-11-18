@@ -803,7 +803,12 @@
         {
             "description": "Anthropic 工程与技术博客",
             "title": "Anthropic Engineering",
-            "xmlUrl": "https://rsshub.app/anthropic/engineering"
+            "xmlUrl": "https://hub.slarker.me/anthropic/engineering"
+        },
+        {
+            "description": "Anthropic Claude 官方文章与公告",
+            "title": "Claude Articles",
+            "xmlUrl": "https://claude.com/resources/articles/rss.xml"
         },
         {
             "description": "Apple官方消息",

@@ -325,7 +325,9 @@
       <outline text="LLaMA Factory Blog" title="LLaMA Factory Blog" type="rss"  
             xmlUrl="https://blog.llamafactory.net/index.xml" htmlUrl="https://blog.llamafactory.net/index.xml"/>
       <outline text="Anthropic Engineering" title="Anthropic Engineering" type="rss"  
-            xmlUrl="https://rsshub.app/anthropic/engineering" htmlUrl="https://rsshub.app/anthropic/engineering"/>
+            xmlUrl="https://hub.slarker.me/anthropic/engineering" htmlUrl="https://hub.slarker.me/anthropic/engineering"/>
+      <outline text="Claude Articles" title="Claude Articles" type="rss"  
+            xmlUrl="https://claude.com/resources/articles/rss.xml" htmlUrl="https://claude.com/resources/articles/rss.xml"/>
       <outline text="Apple新闻" title="Apple新闻" type="rss"  
             xmlUrl="https://www.apple.com/newsroom/rss-feed.rss" htmlUrl="https://www.apple.com/newsroom/rss-feed.rss"/>
       <outline text="JinaAI" title="JinaAI" type="rss"  
