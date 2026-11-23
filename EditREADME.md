@@ -193,6 +193,7 @@
 | I013 | LLaMA Factory Blog | 开源大模型统一高效微调框架技术博客 | {{latest_content}}  |  [订阅地址](https://blog.llamafactory.net/index.xml)  | 
 | I014 | Anthropic Engineering | Anthropic 工程与技术博客 | {{latest_content}}  |  [订阅地址](https://hub.slarker.me/anthropic/engineering)  | 
 | I015 | Claude Articles | Anthropic Claude 官方文章与公告 | {{latest_content}}  |  [订阅地址](https://claude.com/resources/articles/rss.xml)  | 
+| I016 | Claude Code | Claude Code | {{latest_content}}  |  [订阅地址](https://claude.dev/rss.xml)  | 
 | <h2 id="公司官方新闻">公司官方新闻</h2> |  |   |  |
 | C001 | Apple新闻 | Apple官方消息 | {{latest_content}}  |  [订阅地址](https://www.apple.com/newsroom/rss-feed.rss) |  
 | C002 | JinaAI | JinaAI | {{latest_content}}  |  [订阅地址](https://jina.ai/feed.rss) |  

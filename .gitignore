@@ -3,3 +3,5 @@ local_secret.json
 .DS_Store
 ./README.md
 __pycache__/
+.agents/hooks.json
+.cursor/hooks.json
