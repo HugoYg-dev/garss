@@ -811,6 +811,16 @@
             "xmlUrl": "https://claude.com/resources/articles/rss.xml"
         },
         {
+            "description": "Claude Code",
+            "title": "Claude Code",
+            "xmlUrl": "https://claude.dev/rss.xml"
+        },
+        {
+            "description": "Meta 工程与技术博客",
+            "title": "Engineering at Meta",
+            "xmlUrl": "https://engineering.fb.com/feed"
+        },
+        {
             "description": "Apple官方消息",
             "title": "Apple新闻",
             "xmlUrl": "https://www.apple.com/newsroom/rss-feed.rss"

@@ -328,6 +328,10 @@
             xmlUrl="https://hub.slarker.me/anthropic/engineering" htmlUrl="https://hub.slarker.me/anthropic/engineering"/>
       <outline text="Claude Articles" title="Claude Articles" type="rss"  
             xmlUrl="https://claude.com/resources/articles/rss.xml" htmlUrl="https://claude.com/resources/articles/rss.xml"/>
+      <outline text="Claude Code" title="Claude Code" type="rss"  
+            xmlUrl="https://claude.dev/rss.xml" htmlUrl="https://claude.dev/rss.xml"/>
+      <outline text="Engineering at Meta" title="Engineering at Meta" type="rss"  
+            xmlUrl="https://engineering.fb.com/feed" htmlUrl="https://engineering.fb.com/feed"/>
       <outline text="Apple新闻" title="Apple新闻" type="rss"  
             xmlUrl="https://www.apple.com/newsroom/rss-feed.rss" htmlUrl="https://www.apple.com/newsroom/rss-feed.rss"/>
       <outline text="JinaAI" title="JinaAI" type="rss"  
